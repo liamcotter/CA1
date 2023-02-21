@@ -4,7 +4,7 @@ from database import get_db, close_db
 from werkzeug.security import generate_password_hash
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "3840247394839043hehfdfsn3ri3"
+app.config["SECRET_KEY"] = "1"
 app.teardown_appcontext(close_db)
 
 @app.route("/", methods=["GET","POST"])
