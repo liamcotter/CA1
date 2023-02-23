@@ -1,14 +1,8 @@
 {% extends "base.html" %}
 
 {% block main_content %}
-<form method="POST" action="" novalidate>
-    {{ form.hidden_tag() }}
-    {{ form.obj.label }}
-    {{ form.obj() }}
-    {% for error in form.obj.errors %}
-        {{ error }}
-    {% endfor %}
-    <br />
-    {{ form.submit() }}
-</form>
+<p>We are {{title}}, the top of the range virtual investment platform. Buy and sell stocks or gamble your virtual earnings to your heart's content.</p>
+<p>Invest in multiple stocks and try to climb the leaderboards!</p>
+<p><a href="{{ url_for('register') }}">Register here</a> or <a href="{{ url_for('login') }}">sign in</a> if you already have an account.</p>
+<footer>There are no financial transactions taking place with real currency or cryptocurrency. Thus, there is no legal ramifications from this service. Enjoy at your own risk!</footer>
 {% endblock %}

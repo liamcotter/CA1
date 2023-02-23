@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, url_for, redirect
 from forms import Form
 from database import get_db, close_db
 from werkzeug.security import generate_password_hash
@@ -9,44 +9,40 @@ app.teardown_appcontext(close_db)
 
 @app.route("/", methods=["GET","POST"])
 def home():
-    form = Form()
-    if form.validate_on_submit():
-        data = form.obj.data
-        print(data)
-    return render_template("home.html", form=form)
+    return render_template("home.html", title="Pyramid Investments Ltd.")
 
 @app.route("/buy", methods=["GET","POST"])
 def buy():
-    pass
+    return render_template("buy.html", title="Pyramid Investments Ltd.")
 
 @app.route("/sell", methods=["GET","POST"])
 def sell():
-    pass
+    return render_template("sell.html", title="Pyramid Investments Ltd.")
 
 @app.route("/query", methods=["GET","POST"])
 def query():
-    pass
+    return render_template("query.html", title="Pyramid Investments Ltd.")
 
 @app.route("/login", methods=["GET","POST"])
 def login():
-    pass
+    return render_template("login.html", title="Pyramid Investments Ltd.")
 
 @app.route("/register", methods=["GET","POST"])
 def register():
-    pass
-
-@app.route("/gamble", methods=["GET","POST"])
-def gamble():
-    pass
+    return render_template("register.html", title="Pyramid Investments Ltd.")
 
 @app.route("/account", methods=["GET","POST"])
 def account():
-    pass
+    return render_template("account.html", title="Pyramid Investments Ltd.")
 
 @app.route("/about", methods=["GET","POST"])
 def about():
-    pass
+    return render_template("about.html", title="Pyramid Investments Ltd.")
 
 @app.route("/admin", methods=["GET","POST"])
 def admin():
-    pass
+    return render_template("admin.html", title="Pyramid Investments Ltd.")
+
+@app.route("/gamble", methods=["GET","POST"])
+def gamble():
+    return render_template("gamble.html", title="Pyramid Investments Ltd.")
