@@ -6,8 +6,7 @@ DROP TABLE IF EXISTS gamble;
 
 CREATE TABLE users
 (
-    uuid INTEGER PRIMARY KEY,
-    username TEXT NOT NULL,
+    username TEXT PRIMARY KEY,
     password TEXT NOT NULL,
     about TEXT
 );
@@ -23,20 +22,22 @@ CREATE TABLE stock_hist
 
 CREATE TABLE user_hist
 (
-    uuid INTEGER NOT NULL,
+    username INTEGER NOT NULL,
     time INTEGER NOT NULL,
     cash INTEGER NOT NULL,
     net_worth INTEGER NOT NULL,
-    PRIMARY KEY (uuid, time)
+    PRIMARY KEY (username, time)
 );
 
 CREATE TABLE transactions
 (
     transaction_id INTEGER PRIMARY KEY,
-    uuid INTEGER NOT NULL,
+    username INTEGER NOT NULL,
     time INTEGER NOT NULL,
     stock_uuid INTEGER NOT NULL,
     quantitiy INTEGER NOT NULL,
     price INTEGER NOT NULL,
     buy BOOLEAN NOT NULL
 );
+
+/*SELECT * FROM users*/

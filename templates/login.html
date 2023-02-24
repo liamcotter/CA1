@@ -2,8 +2,17 @@
 
 {% block main_content %}
 <form method="POST" action="" novalidate>
-
+    {{ form.hidden_tag() }}
+    {{ form.username.label }}
+	{{ form.username() }}
+	{% for error in form.username.errors %}
+		{{ error }}
+	{% endfor %}
+    {{ form.password.label }}
+	{{ form.password() }}
+	{% for error in form.password.errors %}
+		{{ error }}
+	{% endfor %}
     {{ form.submit() }}
-
 </form>
 {% endblock %}
