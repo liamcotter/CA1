@@ -1,10 +1,11 @@
 from flask import Flask, render_template, url_for, redirect, session, g, request
 from flask_session import Session
 from forms import Form, RegistrationForm, LoginForm
-import random
 from database import get_db, close_db
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+from classes import Stock
+from time import time
 
 title = "Pyramid Investments Ltd."
 app = Flask(__name__)
@@ -39,8 +40,23 @@ def sell():
     return render_template("sell.html", title=title)
 
 @app.route("/query", methods=["GET","POST"])
+@login_required
 def query():
-    return render_template("query.html", title=title)
+    db = get_db()
+    stockList = []
+    stocks = db.execute("""SELECT * FROM stock_name;""").fetchall()
+    for stock in stocks:
+        name = stock["name"]
+        uuid = stock["stock_uuid"]
+        latest_info = db.execute("""SELECT * FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchone()
+        update_time = latest_info["time"]
+        valuation = latest_info["valuation"]
+        share_count = latest_info["share_count"]
+        market_value = share_count * valuation
+        last_update = time()//3600 - update_time # minutes ago
+        instace_of_stock = Stock(uuid, name, last_update, valuation, share_count, market_value)
+        stockList.append(instace_of_stock)
+    return render_template("query.html", stocks=stockList, title=title)
 
 @app.route("/login", methods=["GET","POST"])
 def login():
@@ -65,7 +81,7 @@ def login():
 @app.route("/logout")
 def logout():
 	session.clear()
-	return redirect(url_for('index'))
+	return redirect(url_for('home'))
 
 @app.route("/register", methods=["GET","POST"])
 def register():
@@ -76,7 +92,7 @@ def register():
         db = get_db()
         clashing_user = db.execute("""SELECT * FROM users WHERE username = ?;""", (username,) ).fetchone()
         if clashing_user:
-            form.user_id.errors.append("Username is taken.")
+            form.username.errors.append("Username is taken.")
         else:
             db.execute("""INSERT INTO users (username, password, about) VALUES (?, ?, ?);""", (username, generate_password_hash(password), ""))
             db.commit()

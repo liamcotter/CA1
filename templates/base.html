@@ -9,7 +9,16 @@
 
 <body>
     <header>
-        <h1>{{ title }}</h1>
+        {% if g.user %}
+            <a href="{{url_for('account')}}">Account</a>
+            <a href="{{url_for('query')}}">Query</a>
+            <a href="{{url_for('logout')}}">Log Out</a>
+            <a href="{{url_for('about')}}">About us</a>
+        {% else %}
+            <a href="{{url_for('register')}}">Register</a>
+            <a href="{{url_for('login')}}">Log In</a>
+            <a href="{{url_for('about')}}">About us</a>
+        {% endif %}
     </header>
     <main>
         {% block main_content %}
