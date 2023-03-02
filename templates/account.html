@@ -1,9 +1,8 @@
 {% extends "base.html" %}
 
 {% block main_content %}
-<form method="POST" action="" novalidate>
-
-    {{ form.submit() }}
-
-</form>
+{% if user %}
+    <p>Latest update: {{ user.time }} hours ago. {{ user.name }} is worth {{ user.net_worth }} with €{{ user.cash }} in cash.</p>
+{% else %}
+<p>No transactions</p>
 {% endblock %}

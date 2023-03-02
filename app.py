@@ -4,7 +4,7 @@ from forms import Form, RegistrationForm, LoginForm
 from database import get_db, close_db
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-from classes import Stock
+from classes import Stock, User
 from time import time
 
 title = "Pyramid Investments Ltd."
@@ -99,9 +99,20 @@ def register():
             return redirect(url_for('login'))
     return render_template("register.html", form=form, title=title)
 
+@login_required
 @app.route("/account", methods=["GET","POST"])
 def account():
-    return render_template("account.html", title=title)
+    db = get_db()
+    username = session["username"]
+    latest_data = db.execute("""SELECT * FROM user_hist WHERE username = ? ORDER BY time DESC;""", (username,) ).fetchall()
+    times, cashes, net_worths = [], [], []
+    for data_point in latest_data:
+        times.append(data_point["time"])
+        cashes.append(data_point["cash"])
+        net_worths.append(data_point["net_worth"])
+
+    user = User(username, times, cashes, net_worths)
+    return render_template("account.html", title=title, user=user)
 
 @app.route("/about", methods=["GET","POST"])
 def about():

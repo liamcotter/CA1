@@ -6,4 +6,10 @@ class Stock:
         self.valuation = valuation
         self.share_count = share_count
         self.market_value = market_value
-    
+
+class User:
+    def __init__(self, name: str, time: int, cash: int, net_worth: int):
+        self.name = name
+        self.time = time
+        self.cash = cash
+        self.net_worth = net_worth
