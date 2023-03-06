@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<p>{{ name }}</p>
+{% if graph %}
+<figure>
+    {{ graph|safe }}
+</figure>
+{% endif %} 
+{% endblock %}

@@ -1,11 +1,14 @@
 from flask import Flask, render_template, url_for, redirect, session, g, request
 from flask_session import Session
-from forms import Form, RegistrationForm, LoginForm
+from forms import Form, RegistrationForm, LoginForm, BuyForm, SellForm
 from database import get_db, close_db
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from classes import Stock, User
 from time import time
+import base64
+from io import BytesIO
+from matplotlib.figure import Figure
 
 title = "Pyramid Investments Ltd."
 app = Flask(__name__)
@@ -30,6 +33,31 @@ def login_required(view):
 @app.route("/")
 def home():
     return render_template("home.html", title=title)
+
+@app.route("/stock/<uuid>")
+def stock(uuid):
+    buyForm = BuyForm()
+    sellForm = SellForm()
+    db = get_db()
+    stock_info = db.execute("""SELECT * FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchall()
+    name = db.execute("""SELECT name FROM stock_name WHERE stock_uuid = ?;""", (uuid,)).fetchone()
+    name = name["name"]
+    time, valuation = [], []
+    for st in stock_info:
+        time.append(st["time"])
+        valuation.append(st["valuation"])
+    if time == []:
+        return render_template("stock_info.html", title=title, name=name, graph=None)
+    min_time = min(time)
+    time = [t-min_time for t in time]
+    fig = Figure()
+    ax = fig.add_subplot()
+    ax.scatter(time, valuation)
+    buf = BytesIO()
+    fig.savefig(buf, format="png")
+    data = base64.b64encode(buf.getbuffer()).decode("ascii")
+    graph = f"<img src='data:image/png;base64,{data}'/>"
+    return render_template("stock_info.html", graph=graph, name=name, title=title, BuyForm=BuyForm, SellForm=SellForm)
 
 @app.route("/buy", methods=["GET","POST"])
 def buy():

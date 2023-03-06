@@ -11,6 +11,7 @@
             <p> The stock price was updated {{ stock.time }} hours ago. </p>
             <p> {{ stock.name }} is currently worth €{{ stock.valuation }}. </p>
             <p>There are {{ stock.share_count }} shares in circulation, giving {{ stock.name }} a market value of €{{ stock.market_value }}. </p>
+            <a href="{{ url_for('stock', uuid=stock.uuid) }}">See details</a>
         </section>
     {% endfor %}
 {% endif %}

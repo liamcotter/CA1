@@ -16,3 +16,11 @@ class LoginForm(FlaskForm):
 	username = StringField("Username: ", validators=[InputRequired()])
 	password = PasswordField("Password: ", validators=[InputRequired()])
 	submit = SubmitField("Submit")
+
+class BuyForm(FlaskForm):
+	quantity = IntegerField("Volume: ", validators=[InputRequired()])
+	submit = SubmitField("Buy")
+
+class SellForm(FlaskForm):
+	quantity = IntegerField("Volume: ", validators=[InputRequired()])
+	submit = SubmitField("Sell")
