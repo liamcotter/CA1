@@ -32,11 +32,11 @@ CREATE TABLE user_hist
 
 CREATE TABLE transactions
 (
-    transaction_id INTEGER PRIMARY KEY,
+    transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
     username INTEGER NOT NULL,
     time INTEGER NOT NULL,
     stock_uuid TEXT NOT NULL,
-    quantitiy INTEGER NOT NULL,
+    quantity INTEGER NOT NULL,
     price INTEGER NOT NULL,
     buy BOOLEAN NOT NULL
 );
@@ -52,6 +52,7 @@ SELECT * FROM stock_hist;
 SELECT * FROM user_hist;
 SELECT * FROM stock_name;
 SELECT * FROM transactions;
+
 /* 
 test 123
 alt_user 1 

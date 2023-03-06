@@ -6,5 +6,26 @@
 <figure>
     {{ graph|safe }}
 </figure>
-{% endif %} 
+{% endif %}
+<form method="POST" action="" novalidate>
+
+    {{ BuyForm.hidden_tag() }}
+    {{ BuyForm.quantity.label() }}
+    {{ BuyForm.quantity() }}
+    {% for error in BuyForm.quantity.errors %}
+        {{ error }}
+    {% endfor %}
+    {{ BuyForm.submit_buy() }}
+</form>
+<form method="POST" action="" novalidate>
+
+    {{ SellForm.hidden_tag() }}
+    {{ SellForm.quantity.label() }}
+    {{ SellForm.quantity() }}
+    {% for error in SellForm.quantity.errors %}
+        {{ error }}
+    {% endfor %}
+
+    {{ SellForm.submit_sell() }}
+</form>
 {% endblock %}

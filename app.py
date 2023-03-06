@@ -34,30 +34,47 @@ def login_required(view):
 def home():
     return render_template("home.html", title=title)
 
-@app.route("/stock/<uuid>")
+@app.route("/stock/<uuid>", methods=["GET", "POST"])
 def stock(uuid):
     buyForm = BuyForm()
     sellForm = SellForm()
+    if buyForm.validate_on_submit() and buyForm.quantity.data != None:
+        quant = buyForm.quantity.data
+        db = get_db()
+        price_d = db.execute("""SELECT valuation FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchone()
+        price = price_d["valuation"]
+        db.execute("""INSERT into transactions (username, time, stock_uuid, quantity, price, buy) VALUES (?, ?, ?, ?, ?, ?);""", (g.user, time()//1, uuid, quant, price*quant, True))
+        db.commit()
+        return "bought"
+    if sellForm.validate_on_submit():
+        quant = sellForm.quantity.data
+        db = get_db()
+        price_d = db.execute("""SELECT valuation FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchone()
+        price = price_d["valuation"]
+        db.execute("""INSERT into transactions (username, time, stock_uuid, quantity, price, buy) VALUES (?, ?, ?, ?, ?, ?);""", (g.user, time()//1, uuid, quant, price*quant, False))
+        db.commit()
+        return "sold"
+    
     db = get_db()
     stock_info = db.execute("""SELECT * FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchall()
     name = db.execute("""SELECT name FROM stock_name WHERE stock_uuid = ?;""", (uuid,)).fetchone()
     name = name["name"]
-    time, valuation = [], []
+    time_x, valuation = [], []
     for st in stock_info:
-        time.append(st["time"])
+        time_x.append(st["time"])
         valuation.append(st["valuation"])
-    if time == []:
+    if time_x == []:
         return render_template("stock_info.html", title=title, name=name, graph=None)
-    min_time = min(time)
-    time = [t-min_time for t in time]
+    min_time = min(time_x)
+    time_x = [t-min_time for t in time_x]
     fig = Figure()
     ax = fig.add_subplot()
-    ax.scatter(time, valuation)
+    ax.scatter(time_x, valuation)
     buf = BytesIO()
     fig.savefig(buf, format="png")
     data = base64.b64encode(buf.getbuffer()).decode("ascii")
     graph = f"<img src='data:image/png;base64,{data}'/>"
-    return render_template("stock_info.html", graph=graph, name=name, title=title, BuyForm=BuyForm, SellForm=SellForm)
+    return render_template("stock_info.html", graph=graph, name=name, title=title, BuyForm=buyForm, SellForm=sellForm)
 
 @app.route("/buy", methods=["GET","POST"])
 def buy():
