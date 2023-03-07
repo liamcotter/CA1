@@ -18,9 +18,9 @@ class LoginForm(FlaskForm):
 	submit = SubmitField("Submit")
 
 class BuyForm(FlaskForm):
-	quantity = IntegerField("Volume: ", validators=[InputRequired()])
+	quantity_buy = IntegerField("Volume: ", validators=[InputRequired()])
 	submit_buy = SubmitField("Buy")
 
 class SellForm(FlaskForm):
-	quantity = IntegerField("Volume: ", validators=[InputRequired()])
+	quantity_sell = IntegerField("Volume: ", validators=[InputRequired()])
 	submit_sell = SubmitField("Sell")

@@ -10,9 +10,9 @@
 <form method="POST" action="" novalidate>
 
     {{ BuyForm.hidden_tag() }}
-    {{ BuyForm.quantity.label() }}
-    {{ BuyForm.quantity() }}
-    {% for error in BuyForm.quantity.errors %}
+    {{ BuyForm.quantity_buy.label() }}
+    {{ BuyForm.quantity_buy() }}
+    {% for error in BuyForm.quantity_buy.errors %}
         {{ error }}
     {% endfor %}
     {{ BuyForm.submit_buy() }}
@@ -20,9 +20,9 @@
 <form method="POST" action="" novalidate>
 
     {{ SellForm.hidden_tag() }}
-    {{ SellForm.quantity.label() }}
-    {{ SellForm.quantity() }}
-    {% for error in SellForm.quantity.errors %}
+    {{ SellForm.quantity_sell.label() }}
+    {{ SellForm.quantity_sell() }}
+    {% for error in SellForm.quantity_sell.errors %}
         {{ error }}
     {% endfor %}
 

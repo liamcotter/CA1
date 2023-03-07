@@ -38,16 +38,16 @@ def home():
 def stock(uuid):
     buyForm = BuyForm()
     sellForm = SellForm()
-    if buyForm.validate_on_submit() and buyForm.quantity.data != None:
-        quant = buyForm.quantity.data
+    if buyForm.validate_on_submit() and buyForm.quantity_buy.data:
+        quant = buyForm.quantity_buy.data
         db = get_db()
         price_d = db.execute("""SELECT valuation FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchone()
         price = price_d["valuation"]
         db.execute("""INSERT into transactions (username, time, stock_uuid, quantity, price, buy) VALUES (?, ?, ?, ?, ?, ?);""", (g.user, time()//1, uuid, quant, price*quant, True))
         db.commit()
         return "bought"
-    if sellForm.validate_on_submit():
-        quant = sellForm.quantity.data
+    if sellForm.validate_on_submit() and sellForm.quantity_sell.data:
+        quant = sellForm.quantity_sell.data
         db = get_db()
         price_d = db.execute("""SELECT valuation FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchone()
         price = price_d["valuation"]
