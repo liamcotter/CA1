@@ -53,6 +53,7 @@ SELECT * FROM user_hist;
 SELECT * FROM stock_name;
 SELECT * FROM transactions;
 
+SELECT (SELECT SUM(quantity) FROM transactions WHERE buy = 1 AND stock_uuid = "NXCR") - (SELECT SUM(quantity) FROM transactions WHERE buy = 0 AND stock_uuid = "NXCR") AS net_stock FROM transactions LIMIT 1;
 /* 
 test 123
 alt_user 1 

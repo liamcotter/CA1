@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import SubmitField, StringField, IntegerField, RadioField, FloatField, DecimalField, PasswordField
-from wtforms.validators import InputRequired, NumberRange, EqualTo
+from wtforms.validators import InputRequired, NumberRange, EqualTo, ValidationError
+from database import get_db, close_db
 
 class Form(FlaskForm):
     obj = StringField("Some label: ", validators=[InputRequired()])

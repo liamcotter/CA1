@@ -13,19 +13,21 @@
     {{ BuyForm.quantity_buy.label() }}
     {{ BuyForm.quantity_buy() }}
     {% for error in BuyForm.quantity_buy.errors %}
-        {{ error }}
+    {{ error }}
     {% endfor %}
     {{ BuyForm.submit_buy() }}
 </form>
-<form method="POST" action="" novalidate>
+{% if net_stock != 0 %}
+    <form method="POST" action="" novalidate>
 
-    {{ SellForm.hidden_tag() }}
-    {{ SellForm.quantity_sell.label() }}
-    {{ SellForm.quantity_sell() }}
-    {% for error in SellForm.quantity_sell.errors %}
-        {{ error }}
-    {% endfor %}
+        {{ SellForm.hidden_tag() }}
+        {{ SellForm.quantity_sell.label() }}
+        {{ SellForm.quantity_sell() }}
+        {% for error in SellForm.quantity_sell.errors %}
+            {{ error }}
+        {% endfor %}
 
-    {{ SellForm.submit_sell() }}
-</form>
+        {{ SellForm.submit_sell() }}
+    </form>
+{% endif %}
 {% endblock %}

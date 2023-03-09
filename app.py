@@ -9,6 +9,7 @@ from time import time
 import base64
 from io import BytesIO
 from matplotlib.figure import Figure
+from wtforms.validators import StopValidation
 
 title = "Pyramid Investments Ltd."
 app = Flask(__name__)
@@ -38,7 +39,26 @@ def home():
 def stock(uuid):
     buyForm = BuyForm()
     sellForm = SellForm()
-    if buyForm.validate_on_submit() and buyForm.quantity_buy.data:
+    if sellForm.validate_on_submit() and sellForm.quantity_sell.data:
+        db = get_db()
+        response = db.execute("""SELECT 
+								(SELECT SUM(quantity) FROM transactions 
+									WHERE buy = 1 AND stock_uuid = ?) 
+								- (SELECT SUM(quantity) FROM transactions 
+									WHERE buy = 0 AND stock_uuid = ?) 
+								AS net_stock FROM transactions LIMIT 1;""", (uuid, uuid)).fetchone()
+        maxStock = response["net_stock"]
+        quant = sellForm.quantity_sell.data
+        if maxStock < quant or quant < 1:
+            sellForm.quantity_sell.errors.append(f"You can only sell between 1 and {maxStock} stocks.")
+        else:
+            price_d = db.execute("""SELECT valuation FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchone()
+            price = price_d["valuation"]
+            db.execute("""INSERT into transactions (username, time, stock_uuid, quantity, price, buy) VALUES (?, ?, ?, ?, ?, ?);""", (g.user, time()//1, uuid, quant, price*quant, False))
+            db.commit()
+            return "sold"
+    
+    elif buyForm.validate_on_submit() and buyForm.quantity_buy.data:
         quant = buyForm.quantity_buy.data
         db = get_db()
         price_d = db.execute("""SELECT valuation FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchone()
@@ -46,14 +66,6 @@ def stock(uuid):
         db.execute("""INSERT into transactions (username, time, stock_uuid, quantity, price, buy) VALUES (?, ?, ?, ?, ?, ?);""", (g.user, time()//1, uuid, quant, price*quant, True))
         db.commit()
         return "bought"
-    if sellForm.validate_on_submit() and sellForm.quantity_sell.data:
-        quant = sellForm.quantity_sell.data
-        db = get_db()
-        price_d = db.execute("""SELECT valuation FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchone()
-        price = price_d["valuation"]
-        db.execute("""INSERT into transactions (username, time, stock_uuid, quantity, price, buy) VALUES (?, ?, ?, ?, ?, ?);""", (g.user, time()//1, uuid, quant, price*quant, False))
-        db.commit()
-        return "sold"
     
     db = get_db()
     stock_info = db.execute("""SELECT * FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchall()
@@ -63,8 +75,6 @@ def stock(uuid):
     for st in stock_info:
         time_x.append(st["time"])
         valuation.append(st["valuation"])
-    if time_x == []:
-        return render_template("stock_info.html", title=title, name=name, graph=None)
     min_time = min(time_x)
     time_x = [t-min_time for t in time_x]
     fig = Figure()
@@ -74,7 +84,14 @@ def stock(uuid):
     fig.savefig(buf, format="png")
     data = base64.b64encode(buf.getbuffer()).decode("ascii")
     graph = f"<img src='data:image/png;base64,{data}'/>"
-    return render_template("stock_info.html", graph=graph, name=name, title=title, BuyForm=buyForm, SellForm=sellForm)
+    response = db.execute("""SELECT 
+                            (SELECT SUM(quantity) FROM transactions 
+                                WHERE buy = 1 AND stock_uuid = ?) 
+                            - (SELECT SUM(quantity) FROM transactions 
+                                WHERE buy = 0 AND stock_uuid = ?) 
+                            AS net_stock FROM transactions LIMIT 1;""", (uuid, uuid)).fetchone()
+    net_stock = response["net_stock"]
+    return render_template("stock_info.html", graph=graph, name=name, title=title, BuyForm=buyForm, SellForm=sellForm, net_stock=net_stock)
 
 @app.route("/buy", methods=["GET","POST"])
 def buy():
