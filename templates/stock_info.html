@@ -17,7 +17,7 @@
     {% endfor %}
     {{ BuyForm.submit_buy() }}
 </form>
-{% if net_stock != 0 %}
+{% if net_stock != 0 and net_stock is not none %}
     <form method="POST" action="" novalidate>
 
         {{ SellForm.hidden_tag() }}

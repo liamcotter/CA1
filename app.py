@@ -9,7 +9,6 @@ from time import time
 import base64
 from io import BytesIO
 from matplotlib.figure import Figure
-from wtforms.validators import StopValidation
 
 title = "Pyramid Investments Ltd."
 app = Flask(__name__)
@@ -18,6 +17,29 @@ app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_PERMANENT"] = False
 app.teardown_appcontext(close_db)
 Session(app)
+
+def update_user_stats(username: str):
+    uuids = []
+    net_worths = []
+    db = get_db()
+    stocks = db.execute("""SELECT DISTINCT stock_uuid FROM transactions WHERE username = ?;""", (username,)).fetchall()
+    for stock in stocks:
+        uuids.append(stock["stock_uuid"])
+    for uuid in uuids:
+        response = db.execute("""SELECT 
+								(SELECT SUM(quantity) FROM transactions 
+									WHERE buy = 1 AND stock_uuid = ?) 
+								- (SELECT SUM(quantity) FROM transactions 
+									WHERE buy = 0 AND stock_uuid = ?) 
+								AS net_stock FROM transactions LIMIT 1;""", (uuid, uuid)).fetchone()
+        total = response["net_stock"]
+        value = db.execute("""SELECT valuation FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC LIMIT 1""", (uuid,)).fetchone()
+        net_worths.append(value*total)
+    cash_d = db.execute("""SELECT cash FROM user_hist WHERE username = ? ORDER BY time DESC LIMIT 1;""", (username,)).fetchone()
+    cash = cash_d["cash"]
+    net_worth = sum(net_worths) + cash 
+    db.execute("""INSERT INTO user_hist VALUES (?, ?, ?, ?);""", (username, time()//1, cash, net_worth))
+    db.commit()
 
 @app.before_request
 def logged_in_user():
@@ -35,6 +57,7 @@ def login_required(view):
 def home():
     return render_template("home.html", title=title)
 
+@login_required
 @app.route("/stock/<uuid>", methods=["GET", "POST"])
 def stock(uuid):
     buyForm = BuyForm()
@@ -56,6 +79,12 @@ def stock(uuid):
             price = price_d["valuation"]
             db.execute("""INSERT into transactions (username, time, stock_uuid, quantity, price, buy) VALUES (?, ?, ?, ?, ?, ?);""", (g.user, time()//1, uuid, quant, price*quant, False))
             db.commit()
+            d = db.execute("""SELECT cash, net_worth FROM user_hist WHERE username = ? ORDER BY time DESC LIMIT 1;""", (g.user,)).fetchone()
+            cash = d["cash"]
+            cash += price*quant
+            net_worth = d["net_worth"]
+            db.execute("""INSERT INTO user_hist VALUES (?, ?, ?, ?);""", (g.user, time()//1, cash, net_worth))
+            db.commit()
             return "sold"
     
     elif buyForm.validate_on_submit() and buyForm.quantity_buy.data:
@@ -64,6 +93,12 @@ def stock(uuid):
         price_d = db.execute("""SELECT valuation FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchone()
         price = price_d["valuation"]
         db.execute("""INSERT into transactions (username, time, stock_uuid, quantity, price, buy) VALUES (?, ?, ?, ?, ?, ?);""", (g.user, time()//1, uuid, quant, price*quant, True))
+        db.commit()
+        cash_worth = db.execute("""SELECT cash, net_worth FROM user_hist WHERE username = ?;""", (g.user,)).fetchone()
+        cash = cash_worth["cash"]
+        net_worth = cash_worth["net_worth"]
+        cash = cash - price*quant
+        db.execute("""INSERT INTO user_hist VALUES (?, ?, ?, ?);""", (g.user, time()//1, cash, net_worth))
         db.commit()
         return "bought"
     
@@ -86,10 +121,10 @@ def stock(uuid):
     graph = f"<img src='data:image/png;base64,{data}'/>"
     response = db.execute("""SELECT 
                             (SELECT SUM(quantity) FROM transactions 
-                                WHERE buy = 1 AND stock_uuid = ?) 
+                                WHERE buy = 1 AND stock_uuid = ? AND username = ?) 
                             - (SELECT SUM(quantity) FROM transactions 
-                                WHERE buy = 0 AND stock_uuid = ?) 
-                            AS net_stock FROM transactions LIMIT 1;""", (uuid, uuid)).fetchone()
+                                WHERE buy = 0 AND stock_uuid = ? AND username = ?) 
+                            AS net_stock FROM transactions LIMIT 1;""", (uuid, g.user, uuid, g.user)).fetchone()
     net_stock = response["net_stock"]
     return render_template("stock_info.html", graph=graph, name=name, title=title, BuyForm=buyForm, SellForm=sellForm, net_stock=net_stock)
 
@@ -157,6 +192,11 @@ def register():
             form.username.errors.append("Username is taken.")
         else:
             db.execute("""INSERT INTO users (username, password, about) VALUES (?, ?, ?);""", (username, generate_password_hash(password), ""))
+            db.commit()
+            now_time = time()
+            cash = 200000 # Starting cash
+            net_worth = cash
+            db.execute("""INSERT INTO user_hist VALUES (?, ?, ?, ?);""", (username, now_time//1, cash, net_worth))
             db.commit()
             return redirect(url_for('login'))
     return render_template("register.html", form=form, title=title)
