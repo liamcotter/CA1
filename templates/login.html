@@ -8,6 +8,7 @@
 	{% for error in form.username.errors %}
 		{{ error }}
 	{% endfor %}
+	<br />
     {{ form.password.label }}
 	{{ form.password() }}
 	{% for error in form.password.errors %}

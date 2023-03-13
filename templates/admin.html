@@ -2,8 +2,31 @@
 
 {% block main_content %}
 <form method="POST" action="" novalidate>
-
+    {{ form.hidden_tag() }}
+    {{ form.stockname.label }}
+	{{ form.stockname() }}
+	{% for error in form.stockname.errors %}
+		{{ error }}
+	{% endfor %}
+	<br />
+    {{ form.shorthand.label }}
+	{{ form.shorthand() }}
+	{% for error in form.shorthand.errors %}
+		{{ error }}
+	{% endfor %}
+    <br />
+    {{ form.valuation.label }}
+	{{ form.valuation() }}
+	{% for error in form.valuation.errors %}
+		{{ error }}
+	{% endfor %}
+	<br />
+    {{ form.share_count.label }}
+	{{ form.share_count() }}
+	{% for error in form.share_count.errors %}
+		{{ error }}
+	{% endfor %}
+    <br />
     {{ form.submit() }}
-
 </form>
 {% endblock %}

@@ -53,14 +53,39 @@ SELECT * FROM user_hist;
 SELECT * FROM stock_name;
 SELECT * FROM transactions;
 
-SELECT (SELECT SUM(quantity) FROM transactions WHERE buy = 1 AND stock_uuid = "NXCR") - (SELECT SUM(quantity) FROM transactions WHERE buy = 0 AND stock_uuid = "NXCR") AS net_stock FROM transactions LIMIT 1;
+SELECT (SELECT SUM(quantity) as tot_buy FROM transactions WHERE buy = 0 AND stock_uuid = "GSCN" AND username = "admin") 
+- COALESCE(SELECT SUM(quantity) FROM transactions WHERE buy = 0 AND stock_uuid = "GSCN" AND username = "admin", 0) AS net_stock FROM transactions LIMIT 1;
+
 /* 
 test 123
-alt_user 1 
+alt_user 1
+admin 3.14159
 */
 /*
 INSERT INTO stock_hist VALUES
 ("NXCR", 465994, 1200, 2000);
 INSERT INTO stock_name VALUES
 ("NXCR", "NexaCorp");
+*/
+/*
+    NexaTech (NXTC)
+    MindByte (MBYT)
+    Cybrospace (CYBR)
+    QuantumSoft (QTSM)
+    GenoTech (GNTC)
+    NeuralNet (NRNT)
+    SynthLabs (SYLB)
+    HyperLoop (HYLP)
+    AeroCyber (ARCB)
+    RoboLogic (RBLG)
+    HelioTech (HLTC)
+    NanoWorks (NNWR)
+    SpaceXplor (SPXL)
+    GeoScan (GSCN)
+    DataCore (DTCR)
+    OptiStream (OPTM)
+    CyberDynamiX (CYDX)
+    NeuroGen (NRGN)
+    MindScope (MDSP)
+    IntelliaTech (ITLT)
 */

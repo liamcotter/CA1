@@ -2,7 +2,23 @@
 
 {% block main_content %}
 {% if user %}
-    <p>Latest update: {{ user.time }} hours ago. {{ user.name }} is worth {{ user.net_worth }} with €{{ user.cash }} in cash.</p>
+    <p>Latest update: {{ user.time }} hours ago. {{ user.name }} is worth €{{ user.net_worth }} with €{{ user.cash }} in cash.</p>
+    <table>
+        <tr>
+            <th>Stock Name</th>
+            <th>No. of Stocks</th>
+            <th>Latest Price</th>
+            <th>Total Value</th>
+        </tr>
+        {% for stock in stocks %}
+        <tr>
+            <th>{{ stock["name"] }}</th>
+            <th>{{ stock["total"] }}</th>
+            <th>{{ stock["value"] }}</th>
+            <th>{{ stock["net_worth"] }}</th>
+        </tr>
+        {% endfor %}
+    </table>
 {% else %}
 <p>No transactions</p>
 {% endif %}
