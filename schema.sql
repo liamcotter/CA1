@@ -18,6 +18,9 @@ CREATE TABLE stock_hist
     time INTEGER NOT NULL,
     valuation INTEGER NOT NULL,
     share_count INTEGER NOT NULL,
+    sigma REAL NOT NULL,
+    mu REAL NOT NULL,
+    seed INTEGER NOT NULL,
     PRIMARY KEY (stock_uuid, time)
 );
 
@@ -56,6 +59,7 @@ SELECT * FROM transactions;
 SELECT (SELECT SUM(quantity) as tot_buy FROM transactions WHERE buy = 0 AND stock_uuid = "GSCN" AND username = "admin") 
 - COALESCE(SELECT SUM(quantity) FROM transactions WHERE buy = 0 AND stock_uuid = "GSCN" AND username = "admin", 0) AS net_stock FROM transactions LIMIT 1;
 
+UPDATE stock_hist SET time = 1678814633.0325038 WHERE stock_uuid = "NXCR";
 /* 
 test 123
 alt_user 1

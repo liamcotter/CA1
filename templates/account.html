@@ -2,7 +2,13 @@
 
 {% block main_content %}
 {% if user %}
-    <p>Latest update: {{ user.time }} hours ago. {{ user.name }} is worth €{{ user.net_worth }} with €{{ user.cash }} in cash.</p>
+    <p>{{ user.name }} is worth €{{ user.net_worth }} with €{{ user.cash }} in cash.</p>
+    {% if graph %}
+    <figure>
+        {{ graph|safe }}
+    </figure>
+    {% endif %}
+    {% if stocks|length > 0 %}
     <table>
         <tr>
             <th>Stock Name</th>
@@ -19,6 +25,7 @@
         </tr>
         {% endfor %}
     </table>
+    {% endif %}
 {% else %}
 <p>No transactions</p>
 {% endif %}
