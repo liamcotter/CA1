@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<h1>Leaderboard</h1>
+<table>
+    <tr>
+        <th>Investor</th>
+        <th>Total % Gained</th>
+        <th>Net Worth</th>
+    </tr>
+{% for user in lb %}
+<tr>
+    <td>{{ user["name"] }}</td>
+    {% if user["change"] > 0 %}
+        <td>{{ user["change"] }}% &#x1F4C8</td>
+    {% else %}
+        <td>{{ user["change"] }}% &#x1F4C9</td>
+    {% endif %}
+    <td>€{{ user["net_val"] }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

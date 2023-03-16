@@ -81,7 +81,8 @@ body {
 
 p,
 figure,
-h2 {
+h2,
+h1 {
     text-align: center;
 }
 
@@ -257,4 +258,47 @@ footer {
     width: 100%;
     display: flex;
     justify-content: center;
+}
+
+/* gambling outcome */
+
+
+/* 
+    experimental feature, so not on Firefox and Safari, but is on Chromium browsers 
+    Allows you to animate colour change
+    https://developer.mozilla.org/en-US/docs/Web/CSS/@property
+*/
+
+@property --c {
+    syntax: '<color>';
+    inherits: false;    
+    initial-value: #ceffc7;
+  }
+
+@keyframes pulse_bad {
+    from {--c: #ceffc7;}
+    to {--c:#ff0000a2;}
+}
+
+@keyframes pulse_good {
+    from {--c: #ceffc7;}
+    to {--c:#00b303c5;}
+}
+
+#gambleoutcomegood {
+    height: 99vh;
+    animation: pulse_good 1s linear 0s normal forwards;
+    background-color: var(--c);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#gambleoutcomebad {
+    height: 100vh;
+    animation: pulse_bad 1s linear 0s normal forwards;
+    background-color: var(--c);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

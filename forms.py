@@ -27,3 +27,9 @@ class AdminNewStockForm(FlaskForm):
 	valuation = IntegerField("Initial Valuation: ", validators=[InputRequired(message="You must specify the initial valuation of the stock."), NumberRange(min=0.000001,message="Value cannot be negative")])
 	share_count = IntegerField("Inital Share Count: ", validators=[InputRequired(message="Please enter the total share count"), NumberRange(min=1, message="Total share count must be greater than 0")])
 	submit = SubmitField("Create")
+
+class GambleForm(FlaskForm):
+	limit = IntegerField("Numbers to choose from: ", validators=[InputRequired(message="Please specify the highest number possible to be drawn."), NumberRange(min=2, message="2 is the minimum.")])
+	guess = IntegerField("Guess: ", validators=[InputRequired(message="Please bet on a number!")])
+	bet = IntegerField("Bet: ", validators=[InputRequired(message="Please gamble some money!")])
+	submit = SubmitField("Gamble")

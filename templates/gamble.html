@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<form method="POST" action="" novalidate>
+    {{ form.hidden_tag() }}
+    {{ form.limit.label }}
+	{{ form.limit() }}
+	{% for error in form.limit.errors %}
+	<p>{{ error }}</p>
+	{% endfor %}
+	<br />
+    {{ form.guess.label }}
+	{{ form.guess() }}
+	{% for error in form.guess.errors %}
+	<p>{{ error }}</p>
+	{% endfor %}
+    <br />
+    {{ form.bet.label }}
+	{{ form.bet() }}
+	{% for error in form.bet.errors %}
+	<p>{{ error }}</p>
+	{% endfor %}
+    {{ form.submit() }}
+</form>
+{% endblock %}

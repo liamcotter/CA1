@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+    {% if d["outcome"] == 1 %} <!-- win -->
+    <section id="gambleoutcomegood">
+        <h2>Congratulations! You bet €{{d["bet"]}} and won €{{d["payout"]}}!</h2>
+    </section>
+    {% else %} <!-- loss -->
+    <section id="gambleoutcomebad">
+        <h2>Eeeek! You bet €{{d["bet"]}} and lost €{{d["payout"]}}!</h2>
+    </section>
+    {% endif %}
+{% endblock %}

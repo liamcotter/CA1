@@ -1,6 +1,6 @@
 from flask import Flask, render_template, url_for, redirect, session, g, request, abort
 from flask_session import Session
-from forms import RegistrationForm, LoginForm, BuyForm, SellForm, AdminNewStockForm
+from forms import RegistrationForm, LoginForm, BuyForm, SellForm, AdminNewStockForm, GambleForm
 from database import get_db, close_db
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -9,8 +9,9 @@ from time import time, sleep
 import base64
 from io import BytesIO
 from matplotlib.figure import Figure
-from random import randint
+from random import randint, seed
 from price_gen import generate_new_stock_price
+from operator import itemgetter
 
 title = "Pyramid Investments Ltd."
 app = Flask(__name__)
@@ -21,11 +22,7 @@ app.teardown_appcontext(close_db)
 Session(app)
 
 """
-gamble
-leaderboard
-fix stock price
-add info for derek
-improve home page
+
 """
 
 def update_user_stats(username: str):
@@ -46,11 +43,13 @@ def update_user_stats(username: str):
             sell = 0
         total = buy-sell
         init_vals = db.execute("""SELECT time, valuation, sigma, mu, seed FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC LIMIT 1""", (uuid,)).fetchone()
-        value = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"], init_vals["seed"])
-        net_worths.append(value*total)
+        seed(init_vals["seed"])
+        random_seeds = [randint(0,9999) for _ in range(100)]
+        seed_no = random_seeds[int((time()//1)%100)]
+        price = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"],seed_no)
+        net_worths.append(price*total)
     cash_d = db.execute("""SELECT cash FROM user_hist WHERE username = ? ORDER BY time DESC LIMIT 1;""", (username,)).fetchone()
     cash = cash_d["cash"]
-    print("Update: ", cash, net_worths)
     if sum(net_worths) == 0:
         net_worth = cash
     else:
@@ -74,7 +73,6 @@ def login_required(view):
 def admin_required(view):
     @wraps(view)
     def wrapped_view(*args, **kwargs):
-        print("User:", g.user)
         if g.user != "admin":
             return redirect(url_for('login', next=request.url))
         return view(*args, **kwargs)
@@ -93,7 +91,10 @@ def api_stock(uuid):
         d["errcode"] = 1 # Only error possible
         d["error"] = "Invalid stock abbreviation"
         return d
-    price = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"], init_vals["seed"])
+    seed(init_vals["seed"])
+    random_seeds = [randint(0,9999) for _ in range(100)]
+    seed_no = random_seeds[int((time()//1)%100)]
+    price = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"],seed_no)
     d["price"] = price
     d["uuid"] = uuid
     d["time"] = time()//1
@@ -128,7 +129,10 @@ def stock(uuid):
             sellForm.quantity_sell.errors.append(f"You can only sell between 1 and {maxStock} stocks.")
         else:
             init_vals = db.execute("""SELECT time, valuation, sigma, mu, seed FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC LIMIT 1""", (uuid,)).fetchone()
-            price = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"], init_vals["seed"])
+            seed(init_vals["seed"])
+            random_seeds = [randint(0,9999) for _ in range(100)]
+            seed_no = random_seeds[int((time()//1)%100)]
+            price = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"],seed_no)
             update_user_stats(g.user)
             db.execute("""INSERT into transactions (username, time, stock_uuid, quantity, price, buy) VALUES (?, ?, ?, ?, ?, ?);""", (g.user, time()//1, uuid, quant, price*quant, False))
             db.commit()
@@ -136,7 +140,6 @@ def stock(uuid):
             cash = d["cash"]
             cash += price*quant
             net_worth = d["net_worth"]
-            print("Sold: ", cash, net_worth)
             db.execute("""INSERT INTO user_hist VALUES (?, ?, ?, ?);""", (g.user, time()//1, cash, net_worth))
             db.commit()
             sleep(1) # avoid duplicate user_info entry
@@ -145,7 +148,11 @@ def stock(uuid):
     elif buyForm.validate_on_submit() and buyForm.quantity_buy.data:
         quant = buyForm.quantity_buy.data
         init_vals = db.execute("""SELECT time, valuation, sigma, mu, seed FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC LIMIT 1""", (uuid,)).fetchone()
-        price = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"], init_vals["seed"])
+        # consistent randomness
+        seed(init_vals["seed"])
+        random_seeds = [randint(0,9999) for _ in range(100)]
+        seed_no = random_seeds[int((time()//1)%100)]
+        price = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"],seed_no)
         cash_worth = db.execute("""SELECT cash, net_worth FROM user_hist WHERE username = ? ORDER BY time DESC;""", (g.user,)).fetchone()
         cash = cash_worth["cash"]
         max_stock = cash // price
@@ -156,7 +163,6 @@ def stock(uuid):
             db.execute("""INSERT into transactions (username, time, stock_uuid, quantity, price, buy) VALUES (?, ?, ?, ?, ?, ?);""", (g.user, time()//1, uuid, quant, price*quant, True))
             db.commit()
             cash = cash - price*quant
-            print("Buy: ", cash, net_worth)
             db.execute("""INSERT INTO user_hist VALUES (?, ?, ?, ?);""", (g.user, time()//1, cash, net_worth))
             db.commit()
             sleep(1) # avoid duplicate user_info entry
@@ -167,19 +173,23 @@ def stock(uuid):
     init_vals = db.execute("""SELECT time, valuation, sigma, mu, seed FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC LIMIT 1""", (uuid,)).fetchone()
     t = init_vals["time"]
     curr_time = time()
-    diff = (curr_time - t) /100
-    print(diff)
+    size = 100
+    diff = (curr_time - t) / size
     valuations, time_x = [], []
-    for i in range(100):
+    seed(init_vals["seed"])
+    random_seeds = [randint(0,9999) for _ in range(size)]
+    for i in range(size):
         new_t = t + diff*i
-        price = generate_new_stock_price(t, init_vals["valuation"], init_vals["mu"], init_vals["sigma"], init_vals["seed"], curr_time=new_t)
-        time_x.append(new_t/(60*60))
+        seed_no = random_seeds[int((new_t//1)%size)]
+        price = generate_new_stock_price(t, init_vals["valuation"], init_vals["mu"], init_vals["sigma"], seed_no, curr_time=new_t)
+        time_x.append(new_t)
         valuations.append(price)
-    print(valuations)
     min_time = min(time_x)
-    time_x = [t-min_time for t in time_x]
+    time_x = [(t-min_time)/(3600) for t in time_x]
     fig = Figure()
     ax = fig.add_subplot()
+    ax.set_xlabel("Time (hours)")
+    ax.set_ylabel("Value (€)")
     ax.plot(time_x, valuations)
     ax.ticklabel_format(style='plain', useOffset=False)
     buf = BytesIO()
@@ -205,6 +215,11 @@ def stock(uuid):
 @login_required
 def query():
     db = get_db()
+    # Update for better data/records
+    users = db.execute("""SELECT username FROM users""").fetchall()
+    users = [user["username"] for user in users]
+    for user in users:
+        update_user_stats(user)
     stockList = []
     stocks = db.execute("""SELECT * FROM stock_name;""").fetchall()
     for stock in stocks:
@@ -213,7 +228,10 @@ def query():
         latest_info = db.execute("""SELECT * FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC;""", (uuid,)).fetchone()
         update_time = latest_info["time"]
         init_vals = db.execute("""SELECT time, valuation, sigma, mu, seed FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC LIMIT 1""", (uuid,)).fetchone()
-        price = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"], init_vals["seed"])
+        seed(init_vals["seed"])
+        random_seeds = [randint(0,9999) for _ in range(100)]
+        seed_no = random_seeds[int((time()//1)%100)]
+        price = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"],seed_no)
         share_count = latest_info["share_count"]
         market_value = round(share_count * price,2)
         last_update = (time() - update_time) //3600 # minutes ago
@@ -304,7 +322,10 @@ def account():
         if total > 0:
             d["total"] = total
             init_vals = db.execute("""SELECT time, valuation, sigma, mu, seed FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC LIMIT 1""", (uuid,)).fetchone()
-            value = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"], init_vals["seed"])
+            seed(init_vals["seed"])
+            random_seeds = [randint(0,9999) for _ in range(100)]
+            seed_no = random_seeds[int((time()//1)%100)]
+            value = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"],seed_no)
             d["net_worth"] = round(value*total,2)
             d["value"] = round(value,2)
             stock = db.execute("""SELECT name FROM stock_name WHERE stock_uuid = ?;""", (uuid,)).fetchone()
@@ -318,9 +339,11 @@ def account():
         x_time.append(instance["time"])
         y_net_worth.append(instance["net_worth"])
     min_time = min(x_time)
-    x_time = [(t-min_time) //60 for t in x_time]
+    x_time = [(t-min_time) /3600 for t in x_time]
     fig = Figure()
     ax = fig.add_subplot()
+    ax.set_xlabel("Time (hours)")
+    ax.set_ylabel("Net Worth (€)")
     ax.plot(x_time, y_net_worth)
     ax.ticklabel_format(style='plain', useOffset=False)
     buf = BytesIO()
@@ -343,8 +366,8 @@ def admin():
         init_valuation = form.valuation.data
         share_count = form.share_count.data
         start_time = time()
-        sigma = (randint(0,40000)-20000) /100000 # returns a value bewteen -0.2 and 0.2
-        mu = (randint(0,10000)-5000)/100000 # returns a value between -0.05 and 0.05
+        sigma = (randint(0,60000)-30000) /100000 # returns a value bewteen -0.3 and 0.3
+        mu = (randint(0,20000)-10000)/100000 # returns a value between -0.1 and 0.1
         seed = randint(0,100000)
         db = get_db()
         stocks = db.execute("""SELECT * FROM stock_name""").fetchall()
@@ -355,21 +378,79 @@ def admin():
                 form.stockname.errors.append("Stock name already exists.")
             if len(form.stockname.errors) != 0 or len(form.stockname.errors) != 0:
                 return render_template("admin.html", form=form,  title=title)
-        db.execute("""INSERT INTO stock_name VALUES (?, ?)""", (shorthand, stockname))
-        db.execute("""INSERT INTO stock_hist VALUES (?, ?, ?, ?, ?, ?, ?)""", (shorthand, start_time, init_valuation, share_count, sigma, mu, seed))
+        db.execute("""INSERT INTO stock_name VALUES (?, ?);""", (shorthand, stockname))
+        db.execute("""INSERT INTO stock_hist VALUES (?, ?, ?, ?, ?, ?, ?);""", (shorthand, start_time, init_valuation, share_count, sigma, mu, seed))
         db.commit()
         return redirect(url_for("query"))
     return render_template("admin.html", form=form,  title=title)
 
 @app.route("/gamble", methods=["GET","POST"])
+@login_required
 def gamble():
-    return render_template("gamble.html", title=title)
+    form = GambleForm()
+    if form.validate_on_submit():
+        db = get_db()
+        cash_d = db.execute("""SELECT cash, net_worth FROM user_hist WHERE username = ? ORDER BY time DESC LIMIT 1;""", (g.user,)).fetchone()
+        cash = cash_d["cash"]
+        net_worth = cash_d["net_worth"] - cash # stocks only
+        guess = form.guess.data
+        limit = form.limit.data
+        bet = form.bet.data
+        if bet > cash:
+            form.bet.errors.append("You cannot afford your bet!")
+            return render_template("gamble.html", title=title)
+        if guess > limit:
+            form.guess.errors.append("Guess cannot exceed the chosen limit.")
+            return render_template("gamble.html", title=title)
+        # to give a disadvantage to the user, I make limit+1 options. This reduces the expected value without changing the prize
+        # It is deceiving to do this, but they will never know!
+        guess_user = randint(1, limit+1) # User has illusion of the chosen number but I override it.
+        target = randint(1,limit+1)
+        if guess_user == target:
+            payout = (limit*bet - bet)
+            outcome = 1
+        else:
+            payout = -bet
+            outcome = 0
+        cash += payout
+        net_worth = net_worth + cash # stocks + new cash
+        db.execute("""INSERT INTO user_hist VALUES (?, ?, ?, ?);""", (g.user, time()//1, cash, net_worth))
+        db.commit()
+        d = {}
+        d["payout"] = abs(payout)
+        d["bet"] = bet
+        d["user"] = g.user
+        d["outcome"] = outcome
+        return render_template("gamble_outcome.html", title=title, d=d)
+    return render_template("gamble.html", title=title, form=form)
+
+@app.route("/leaderboard")
+@login_required
+def leaderboard():
+    db = get_db()
+    users = db.execute("""SELECT username FROM users""").fetchall()
+    users = [user["username"] for user in users]
+    user_list = []
+    for user in users:
+        update_user_stats(user)
+        net_val_dict = db.execute("""SELECT net_worth FROM user_hist WHERE username = ? ORDER BY time DESC LIMIT 1;""", (user,)).fetchone()
+        net_val = net_val_dict["net_worth"]
+        change = (net_val - 200000) / 2000
+        d = {}
+        d["net_val"] = round(net_val,2)
+        d["change"] = round(change,2)
+        d["name"] = user
+        user_list.append(d)
+    # Quick sorting by key of dict
+    # https://docs.python.org/3/library/operator.html#operator.itemgetter
+    sorted_leaderboard = sorted(user_list, key=itemgetter('change'), reverse=True) 
+    return render_template("leaderboard.html", title=title, lb=sorted_leaderboard)
 
 # https://flask.palletsprojects.com/en/1.1.x/patterns/errorpages/ 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html'), 404
+    return render_template('404.html', title=title), 404
 
 @app.errorhandler(500)
 def page_not_found(e):
-    return render_template('500.html'), 500
+    return render_template('500.html', title=title), 500

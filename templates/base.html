@@ -5,19 +5,24 @@
     <meta charset="utf-8" />
     <title>{{ title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    <link rel="icon" href="{{ url_for('static',filename='favicon.ico') }}" />
 </head>
 
 <body>
     <header>
         {% if g.user == "admin" %}
             <a href="{{url_for('account')}}">Account</a>
-            <a href="{{url_for('query')}}">Query</a>
+            <a href="{{url_for('query')}}">Stocks</a>
+            <a href="{{url_for('leaderboard')}}">Leaderboard</a>
+            <a href="{{url_for('gamble')}}">Gambling</a>
             <a href="{{url_for('about')}}">About us</a>
             <a href="{{url_for('admin')}}">Admin Panel</a>
             <a href="{{url_for('logout')}}">Log Out</a>
         {% elif g.user %}
             <a href="{{url_for('account')}}">Account</a>
-            <a href="{{url_for('query')}}">Query</a>
+            <a href="{{url_for('query')}}">Stocks</a>
+            <a href="{{url_for('leaderboard')}}">Leaderboard</a>
+            <a href="{{url_for('gamble')}}">Gambling</a>
             <a href="{{url_for('about')}}">About us</a>
             <a href="{{url_for('logout')}}">Log Out</a>
         {% else %}
