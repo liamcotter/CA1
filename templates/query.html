@@ -2,17 +2,23 @@
 
 {% block main_content %}
 <p>Browse through stocks and explore our array of features that we offer at no extra cost</p>
-{% if stocks %}
+<section id="stocklist">
+    {% if stocks %}
     {% for stock in stocks %}
-        <section>
+    <section class="stockwrapper">
+        <a href="{{ url_for('stock', uuid=stock.uuid) }}">
+        <section class="stockdisplay">
             <h3>
                 {{ stock.name }}
             </h3>
-            <p> The stock price was updated {{ stock.time }} hours ago. </p>
-            <p> {{ stock.name }} is currently worth €{{ stock.valuation }}. </p>
-            <p>There are {{ stock.share_count }} shares in circulation, giving {{ stock.name }} a market value of €{{ stock.market_value }}. </p>
-            <a href="{{ url_for('stock', uuid=stock.uuid) }}">See details</a>
+            <p>Share price: €{{ stock.valuation }} </p>
+            <p>Share count: {{ stock.share_count }} </p>
+            <p>Market Value:</p>
+            <p>€{{ stock.market_value }}</p>
         </section>
+        </a>
+    </section>
     {% endfor %}
-{% endif %}
+    {% endif %}
+</section>
 {% endblock %}

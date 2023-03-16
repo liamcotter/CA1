@@ -2,13 +2,16 @@
 
 {% block main_content %}
 {% if user %}
-    <p>{{ user.name }} is worth €{{ user.net_worth }} with €{{ user.cash }} in cash.</p>
+    <p>Hello {{user.name}}! These are your stats.</p>
+    <p>Net worth: €{{ user.net_worth }}</p>
+    <p>Cash: €{{ user.cash }}</p>
     {% if graph %}
     <figure>
         {{ graph|safe }}
     </figure>
     {% endif %}
     {% if stocks|length > 0 %}
+    <p> These are your current investments. Carefully monitor them here.</p>
     <table>
         <tr>
             <th>Stock Name</th>
@@ -18,10 +21,10 @@
         </tr>
         {% for stock in stocks %}
         <tr>
-            <th>{{ stock["name"] }}</th>
-            <th>{{ stock["total"] }}</th>
-            <th>{{ stock["value"] }}</th>
-            <th>{{ stock["net_worth"] }}</th>
+            <td><a href="{{ url_for('stock', uuid=stock['uuid'])}}">{{ stock["name"] }}</a></td>
+            <td>{{ stock["total"] }}</td>
+            <td>€{{ stock["value"] }}</td>
+            <td>€{{ stock["net_worth"] }}</td>
         </tr>
         {% endfor %}
     </table>

@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block main_content %}
+<p>Add new stock to this trading platform using this simple form.</p>
+<p><i>Note: The long-term trend for the stock's value is randomly generated.</i></p>
 <form method="POST" action="" novalidate>
     {{ form.hidden_tag() }}
     {{ form.stockname.label }}

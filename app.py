@@ -22,9 +22,12 @@ Session(app)
 
 """
 404 page
-different admin header
 css
-
+gamble
+leaderboard
+fix stock price
+add info for derek
+improve home page
 """
 def update_user_stats(username: str):
     uuids = []
@@ -55,7 +58,8 @@ def update_user_stats(username: str):
         net_worth = sum(net_worths) + cash 
     db.execute("""INSERT INTO user_hist VALUES (?, ?, ?, ?);""", (username, time()//1, cash, net_worth))
     db.commit()
-    sleep(1) #ensures that no two updates occur in 1s,
+    sleep(1) #ensures that no two updates occur in 1s
+
 @app.before_request
 def logged_in_user():
     g.user = session.get("username", None)
@@ -80,6 +84,21 @@ def admin_required(view):
 @app.route("/")
 def home():
     return render_template("home.html", title=title)
+
+@app.route("/api/v1/stock/<uuid>")
+def api_stock(uuid):
+    db = get_db()
+    d = {}
+    init_vals = db.execute("""SELECT time, valuation, sigma, mu, seed FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC LIMIT 1""", (uuid,)).fetchone()
+    if init_vals is None:
+        d["errcode"] = 1 # Only error possible
+        d["error"] = "Invalid stock abbreviation"
+        return d
+    price = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"], init_vals["seed"])
+    d["price"] = price
+    d["uuid"] = uuid
+    d["time"] = time()//1
+    return d
 
 @app.route("/stock/<uuid>", methods=["GET", "POST"])
 @login_required
@@ -117,7 +136,8 @@ def stock(uuid):
             print("Sold: ", cash, net_worth)
             db.execute("""INSERT INTO user_hist VALUES (?, ?, ?, ?);""", (g.user, time()//1, cash, net_worth))
             db.commit()
-            return "sold"
+            sleep(1) # avoid duplicate user_info entry
+            return redirect(url_for("account"))
     
     elif buyForm.validate_on_submit() and buyForm.quantity_buy.data:
         quant = buyForm.quantity_buy.data
@@ -137,7 +157,8 @@ def stock(uuid):
             print("Buy: ", cash, net_worth)
             db.execute("""INSERT INTO user_hist VALUES (?, ?, ?, ?);""", (g.user, time()//1, cash, net_worth))
             db.commit()
-            return "bought"
+            sleep(1) # avoid duplicate user_info entry
+            return redirect(url_for("account"))
     
     db = get_db()
     name = db.execute("""SELECT name FROM stock_name WHERE stock_uuid = ?;""", (uuid,)).fetchone()
@@ -215,7 +236,7 @@ def login():
             session["username"] = username
             next_page = request.args.get("next")
             if not next_page:
-                next_page = url_for('home')
+                next_page = url_for('query')
             return redirect(next_page)
     return render_template("login.html", form=form, title=title)
 
@@ -287,6 +308,7 @@ def account():
             d["value"] = round(value,2)
             stock = db.execute("""SELECT name FROM stock_name WHERE stock_uuid = ?;""", (uuid,)).fetchone()
             d["name"] = stock["name"]
+            d["uuid"] = uuid
             stock_dict.append(d)
     # net worth graph
     user_data = db.execute("""SELECT * FROM user_hist WHERE username = ? ORDER BY time ASC;""", (username,) ).fetchall()
