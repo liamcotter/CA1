@@ -6,13 +6,13 @@
     {{ form.username.label }}
 	{{ form.username() }}
 	{% for error in form.username.errors %}
-		{{ error }}
+	<p>{{ error }}</p>
 	{% endfor %}
 	<br />
     {{ form.password.label }}
 	{{ form.password() }}
 	{% for error in form.password.errors %}
-		{{ error }}
+	<p>{{ error }}</p>
 	{% endfor %}
     {{ form.submit() }}
 </form>

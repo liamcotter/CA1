@@ -3,7 +3,7 @@ from wtforms import SubmitField, StringField, IntegerField, RadioField, FloatFie
 from wtforms.validators import InputRequired, NumberRange, EqualTo, ValidationError, Length
 
 class RegistrationForm(FlaskForm):
-	username = StringField("Username: ", validators=[InputRequired(message="Username cannot be blank.")])
+	username = StringField("Username: ", validators=[InputRequired(message="Username cannot be blank."), Length(0,30, message="Username is too long")])
 	password = PasswordField("Password: ", validators=[InputRequired(message="Password cannot be blank.")])
 	password2 = PasswordField("Re-enter password: ", validators=[InputRequired(message="Password cannot be blank."), EqualTo('password', message="Passwords do not match")])
 	submit = SubmitField("Submit")
@@ -22,8 +22,8 @@ class SellForm(FlaskForm):
 	submit_sell = SubmitField("Sell")
 
 class AdminNewStockForm(FlaskForm):
-	stockname = StringField("Stock Name: ", validators=[InputRequired(message="Stock name is missing.")])
-	shorthand = StringField("Abbreviation: ", validators=[InputRequired(message="You must specify a 4 character shorthand."), Length(min=4, max=4, message="You must specify a 4 character shorthand.")])
-	valuation = IntegerField("Initial Valuation: ", validators=[InputRequired(message="You must specify the initial valuation of the stock.")])
+	stockname = StringField("Stock Name: ", validators=[InputRequired(message="Stock name is missing."),Length(0,30, message="Stock name too long")])
+	shorthand = StringField("Abbreviation: ", validators=[InputRequired(message="You must specify a 4 character shorthand."), Length(min=4, max=4, message="You must specify a 4 character shorthand")])
+	valuation = IntegerField("Initial Valuation: ", validators=[InputRequired(message="You must specify the initial valuation of the stock."), NumberRange(min=0.000001,message="Value cannot be negative")])
 	share_count = IntegerField("Inital Share Count: ", validators=[InputRequired(message="Please enter the total share count"), NumberRange(min=1, message="Total share count must be greater than 0")])
 	submit = SubmitField("Create")

@@ -8,25 +8,25 @@
     {{ form.stockname.label }}
 	{{ form.stockname() }}
 	{% for error in form.stockname.errors %}
-		{{ error }}
+	<p>{{ error }}</p>
 	{% endfor %}
 	<br />
     {{ form.shorthand.label }}
 	{{ form.shorthand() }}
 	{% for error in form.shorthand.errors %}
-		{{ error }}
+	<p>{{ error }}</p>
 	{% endfor %}
     <br />
     {{ form.valuation.label }}
 	{{ form.valuation() }}
 	{% for error in form.valuation.errors %}
-		{{ error }}
+	<p>{{ error }}</p>
 	{% endfor %}
 	<br />
     {{ form.share_count.label }}
 	{{ form.share_count() }}
 	{% for error in form.share_count.errors %}
-		{{ error }}
+	<p>{{ error }}</p>
 	{% endfor %}
     <br />
     {{ form.submit() }}

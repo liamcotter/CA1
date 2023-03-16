@@ -6,17 +6,17 @@
     {{ form.username.label }}
 	{{ form.username() }}
 	{% for error in form.username.errors %}
-		{{ error }}
+		<p>{{ error }}</p>
 	{% endfor %}
     {{ form.password.label }}
 	{{ form.password() }}
 	{% for error in form.password.errors %}
-		{{ error }}
+		<p>{{ error }}</p>
 	{% endfor %}
     {{ form.password2.label }}
 	{{ form.password2() }}
 	{% for error in form.password2.errors %}
-			{{ error }}
+		<p>{{ error }}</p>
 	{% endfor %}
     {{ form.submit() }}
 

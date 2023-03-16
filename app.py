@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, redirect, session, g, request
+from flask import Flask, render_template, url_for, redirect, session, g, request, abort
 from flask_session import Session
 from forms import RegistrationForm, LoginForm, BuyForm, SellForm, AdminNewStockForm
 from database import get_db, close_db
@@ -21,14 +21,13 @@ app.teardown_appcontext(close_db)
 Session(app)
 
 """
-404 page
-css
 gamble
 leaderboard
 fix stock price
 add info for derek
 improve home page
 """
+
 def update_user_stats(username: str):
     uuids = []
     net_worths = []
@@ -105,8 +104,12 @@ def api_stock(uuid):
 def stock(uuid):
     buyForm = BuyForm()
     sellForm = SellForm()
+    db = get_db()
+    stocks = db.execute("""SELECT stock_uuid from stock_name""").fetchall()
+    stocks_list = [s["stock_uuid"] for s in stocks]
+    if uuid not in stocks_list:
+        abort(404)
     if sellForm.validate_on_submit() and sellForm.quantity_sell.data:
-        db = get_db()
         maxStock = 0
         total_buy = db.execute("""SELECT SUM(quantity) as tot_buy FROM transactions 
                                 WHERE buy = 1 AND stock_uuid = ? AND username = ?;""", (uuid, g.user)).fetchone()
@@ -141,7 +144,6 @@ def stock(uuid):
     
     elif buyForm.validate_on_submit() and buyForm.quantity_buy.data:
         quant = buyForm.quantity_buy.data
-        db = get_db()
         init_vals = db.execute("""SELECT time, valuation, sigma, mu, seed FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC LIMIT 1""", (uuid,)).fetchone()
         price = generate_new_stock_price(init_vals["time"], init_vals["valuation"], init_vals["mu"], init_vals["sigma"], init_vals["seed"])
         cash_worth = db.execute("""SELECT cash, net_worth FROM user_hist WHERE username = ? ORDER BY time DESC;""", (g.user,)).fetchone()
@@ -160,7 +162,6 @@ def stock(uuid):
             sleep(1) # avoid duplicate user_info entry
             return redirect(url_for("account"))
     
-    db = get_db()
     name = db.execute("""SELECT name FROM stock_name WHERE stock_uuid = ?;""", (uuid,)).fetchone()
     name = name["name"]
     init_vals = db.execute("""SELECT time, valuation, sigma, mu, seed FROM stock_hist WHERE stock_uuid = ? ORDER BY time DESC LIMIT 1""", (uuid,)).fetchone()
@@ -363,3 +364,12 @@ def admin():
 @app.route("/gamble", methods=["GET","POST"])
 def gamble():
     return render_template("gamble.html", title=title)
+
+# https://flask.palletsprojects.com/en/1.1.x/patterns/errorpages/ 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def page_not_found(e):
+    return render_template('500.html'), 500
