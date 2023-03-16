@@ -22,7 +22,19 @@ app.teardown_appcontext(close_db)
 Session(app)
 
 """
+To log in as admin, use the username "admin" and password "3.14159" and you can access an extra dashboard
 
+The formula used to calculate stock prices is based on a few factors and is calculated as a function of 
+expected growth (mu), variability (sigma), the initial value of the stock, the time since the stock was
+made and a randomness seed. This can be found in price_gen.py
+
+Try to cause a 404 error and it will lead to an error page.
+Similarly, a 500 error will also do the same, but is harder to trigger (hopefully)
+
+on /gamble, there is an colour animation that only works on browsers that are not Safari or Firefox
+(ie, chromium only) as it is an experimental feature.
+
+I also added an API route, try with "NXCR" for a successful return value, and anything else for the error message.
 """
 
 def update_user_stats(username: str):
