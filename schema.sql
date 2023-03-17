@@ -2,7 +2,6 @@
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS stock_hist;
 DROP TABLE IF EXISTS user_hist;
-DROP TABLE IF EXISTS gamble;
 DROP TABLE IF EXISTS stock_name;
 
 CREATE TABLE users
@@ -61,8 +60,8 @@ SELECT (SELECT SUM(quantity) as tot_buy FROM transactions WHERE buy = 0 AND stoc
 /*
 UPDATE stock_hist SET sigma = 0.2 WHERE stock_uuid = "HYLP";
 
-test 123
-alt_user 1
+Cheese #1 chez
+The Pi Man pi
 admin 3.14159
 */
 /*

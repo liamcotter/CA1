@@ -410,10 +410,10 @@ def gamble():
         bet = form.bet.data
         if bet > cash:
             form.bet.errors.append("You cannot afford your bet!")
-            return render_template("gamble.html", title=title)
+            return render_template("gamble.html", title=title, form=form)
         if guess > limit:
             form.guess.errors.append("Guess cannot exceed the chosen limit.")
-            return render_template("gamble.html", title=title)
+            return render_template("gamble.html", title=title, form=form)
         # to give a disadvantage to the user, I make limit+1 options. This reduces the expected value without changing the prize
         # It is deceiving to do this, but they will never know!
         guess_user = randint(1, limit+1) # User has illusion of the chosen number but I override it.
@@ -433,7 +433,7 @@ def gamble():
         d["bet"] = bet
         d["user"] = g.user
         d["outcome"] = outcome
-        return render_template("gamble_outcome.html", title=title, d=d)
+        return render_template("gamble_outcome.html", title=title, form=form, d=d)
     return render_template("gamble.html", title=title, form=form)
 
 @app.route("/leaderboard")
